@@ -1,0 +1,8 @@
+datasets/
+pretrained/
+slurm_outputs/
+core/__pycache__
+core/utils/__pycache__
+core/utils/sync_batchnorm/__pycache__
+RAFT/core/__pycache__
+RAFT/core/utils/__pycache__

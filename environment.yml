@@ -23,4 +23,6 @@ dependencies:
     - scikit-learn==1.1.1
     - scikit-image==0.19.3
 
-
+# Also run: 
+# export CUDA_HOME=$CONDA_PREFIX
+# export TORCH_CUDA_ARCH_LIST="3.5;5.0;6.0;6.1;7.0;7.5;8.0;8.6+PTX"
