@@ -116,7 +116,7 @@ class EISEN(nn.Module):
             if vis_segments:
                 self.visualize_segments(seg_out['pred_segment'], input)
 
-            return affinity_list, loss, seg_metric, segments
+            return affinity_list, loss, seg_metric, seg_out#None
         else:
             return affinity_list, loss, None, None
 

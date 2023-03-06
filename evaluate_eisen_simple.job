@@ -3,7 +3,7 @@
 #SBATCH -p gpu
 #SBATCH --nodes=1
 #SBATCH --gpus-per-node=4
-#SBATCH -t 01:00:00
+#SBATCH -t 00:05:00
 #SBATCH --output=./slurm_outputs/slurm_output_%A.out
 
 module purge
@@ -15,4 +15,4 @@ cd $HOME/eisen
 source $HOME/.bashrc
 conda activate eisen
 
-srun python -u ./simple_eval.py
+srun python -u ./show_example_imgs.py
