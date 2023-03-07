@@ -33,10 +33,10 @@ if __name__=="__main__":
     data_dict = next(iter(val_loader))
     data_dict = {k: v.cuda() for k, v in data_dict.items() if not k == 'file_name'}
     
-    print('Fields in data dict:')
-    print(data_dict.keys())
-    print('Image shape:')
-    print(data_dict['img1'].shape)
+    # print('Fields in data dict:')
+    # print(data_dict.keys())
+    # print('Image shape:')
+    # print(data_dict['img1'].shape)
     #print(data_dict['img2'].shape)
     #print(data_dict['gt_segment'].shape)
     
