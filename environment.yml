@@ -26,3 +26,5 @@ dependencies:
 # Also run: 
 # export CUDA_HOME=$CONDA_PREFIX
 # export TORCH_CUDA_ARCH_LIST="3.5;5.0;6.0;6.1;7.0;7.5;8.0;8.6+PTX"
+# on Windows:
+# set PATH=%PATH%;"C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC\14.29.30133\bin\Hostx64\x64"
