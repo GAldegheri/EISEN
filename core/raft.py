@@ -12,12 +12,12 @@ args, _ = parser.parse_known_args()
 
 
 class EvalRAFT:
-    def __init__(self, flow_threshold, ckpt_path='./RAFT/models/raft-sintel.pth'):
+    def __init__(self, flow_threshold, ckpt_path='./RAFT/models/raft-sintel.pth', device='cuda'):
         model = torch.nn.DataParallel(RAFT(args))
         state_dict = torch.load(ckpt_path, map_location=lambda storage, loc: storage)
         model.load_state_dict(state_dict)
         model.eval()
-        self.model = model.cuda()
+        self.model = model.to(device)
         self.flow_threshold = flow_threshold
 
     def __call__(self, image0, image1):
