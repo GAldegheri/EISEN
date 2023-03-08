@@ -19,8 +19,9 @@ if __name__=="__main__":
     )
     
     val_loader = fetch_dataloader(args)
-    model = nn.DataParallel(EISEN())
-    model = sync_batchnorm.convert_model(model)
+    #model = nn.DataParallel(EISEN())
+    #model = sync_batchnorm.convert_model(model)
+    model = EISEN()
     raft_model = EvalRAFT(flow_threshold=args.flow_threshold)
     
     state_dict = torch.load('pretrained/tdw_playroom_128x128_ckpt.pth')

@@ -15,4 +15,4 @@ cd $HOME/eisen
 source $HOME/.bashrc
 conda activate eisen
 
-srun python -u ./simple_eval.py
+srun python -u ./show_example_imgs.py
