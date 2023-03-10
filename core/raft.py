@@ -3,6 +3,7 @@ import argparse
 import sys
 sys.path.append('./RAFT/core')
 from raft import RAFT
+from collections import OrderedDict
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--small', action='store_true', help='use small model')
@@ -13,9 +14,16 @@ args, _ = parser.parse_known_args()
 
 class EvalRAFT:
     def __init__(self, flow_threshold, ckpt_path='./RAFT/models/raft-sintel.pth', device='cuda'):
-        model = torch.nn.DataParallel(RAFT(args))
-        state_dict = torch.load(ckpt_path, map_location=lambda storage, loc: storage)
-        model.load_state_dict(state_dict)
+        model = RAFT(args) #torch.nn.DataParallel(RAFT(args))
+        state_dict = torch.load(ckpt_path, map_location=device) #lambda storage, loc: storage)
+        
+        new_state_dict = OrderedDict()
+
+        for k, v in state_dict.items():
+            name = k[7:] # remove `module.`
+            new_state_dict[name] = v
+        
+        model.load_state_dict(new_state_dict)
         model.eval()
         self.model = model.to(device)
         self.flow_threshold = flow_threshold

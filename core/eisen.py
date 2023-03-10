@@ -30,8 +30,11 @@ class EISEN(nn.Module):
                  num_masks=32,
                  num_competition_rounds=3,
                  supervision_level=3,
+                 device='cuda'
     ):
         super(EISEN, self).__init__()
+        
+        self.device = device
 
         self.local_window_size = local_window_size
         self.num_affinity_samples = num_affinity_samples
@@ -53,17 +56,21 @@ class EISEN(nn.Module):
             stride = 2 ** level
             H, W = affinity_res[0]//stride, affinity_res[1]//stride
             buffer_name = f'local_indices_{H}_{W}'
-            self.register_buffer(buffer_name, utils.generate_local_indices(img_size=[H, W], K=local_window_size).cuda(), persistent=False)
+            self.register_buffer(buffer_name, utils.generate_local_indices(img_size=[H, W], K=local_window_size).to(device), persistent=False)
 
         # [Propagation]
         self.propagation = GraphPropagation(num_iters=propagation_iters, adj_thresh=propagation_affinity_thresh)
 
         # [Competition]
-        self.competition = Competition(num_masks=num_masks, num_competition_rounds=num_competition_rounds)
+        self.competition = Competition(num_masks=num_masks, 
+                                       num_competition_rounds=num_competition_rounds,
+                                       device=self.device)
 
         # [Input normalization]
         self.register_buffer("pixel_mean", torch.Tensor([123.675, 116.28, 103.53]).view(1, -1, 1, 1), False)
         self.register_buffer("pixel_std", torch.Tensor([58.395, 57.12, 57.375]).view(1, -1, 1, 1), False)
+        
+        self.to(device)
 
     def forward(self, input, segment_target, get_segments=False, vis_segments=False):
         # [Normalize inputs]
@@ -107,19 +114,16 @@ class EISEN(nn.Module):
         # [Compute segmentation masks]
         if get_segments:
             # Compute segments via propagation and competition
-            segments = self.compute_segments(affinity_list[0], sample_inds)
+            segments = self.compute_segments(affinity_list[0], sample_inds, device=self.device)
             # Compute segment metrics
             gt_segment = input['gt_segment']
             seg_metric, seg_out = self.measure_segments(segments,  gt_segment)
             seg_metric = {k: v.to(loss.device).unsqueeze(0) for k, v in seg_metric.items()} 
-
+            
             if vis_segments:
                 self.visualize_segments(seg_out['pred_segment'], input)
 
-            #pred_obj_seg, gt_obj_seg, iou = seg_out['pred_segment']
-            print('seg_out type:', type(seg_out))
-
-            return affinity_list, loss, seg_metric, seg_out #None#pred_obj_seg
+            return affinity_list, loss, seg_metric, seg_out #None
         else:
             return affinity_list, loss, None, None
 
@@ -193,11 +197,11 @@ class EISEN(nn.Module):
 
         return loss
 
-    def compute_segments(self, logits, sample_inds, hidden_dim=32, run_cc=True, min_cc_area=20):
+    def compute_segments(self, logits, sample_inds, hidden_dim=32, run_cc=True, min_cc_area=20, device='cuda'):
         B, N, K = logits.shape
 
         # [Initialize hidden states]
-        h0 = torch.cuda.FloatTensor(B, N, hidden_dim).normal_().softmax(-1) # h0
+        h0 = torch.FloatTensor(B, N, hidden_dim).normal_().softmax(-1).to(device) # h0
 
         # [Process affinities]
         adj = utils.softmax_max_norm(logits) # normalize affinities

@@ -37,7 +37,8 @@ class Competition(nn.Module):
             sticky_winners=True,
             selection_strength=100.0,
             homing_strength=10.0,
-            mask_dead_segments=True
+            mask_dead_segments=True,
+            device='cuda'
     ):
         super().__init__()
         self.num_masks = self.M = num_masks
@@ -66,6 +67,8 @@ class Competition(nn.Module):
         self.size = size  # [H,W]
         if self.size:
             assert len(self.size) == 2, self.size
+            
+        self.device = device
 
     def reshape_batch_time(self, x, merge=True):
 
@@ -242,7 +245,9 @@ class Competition(nn.Module):
 
             ## reinitialize loser agent phenotypes
             loser_phenotypes = self.normalization_func(
-                compute_distance_weighted_vectors(plateau, agents, mask=unharvested, beta=self.homing_strength))
+                compute_distance_weighted_vectors(plateau, agents, 
+                                                  mask=unharvested, beta=self.homing_strength,
+                                                  device=self.device))
             phenotypes = alive_mask * phenotypes + (1.0 - alive_mask) * loser_phenotypes
             phenotypes = self.normalization_func(phenotypes)
 
@@ -266,7 +271,7 @@ class Competition(nn.Module):
 
 
 
-def coordinate_ims(batch_size, seq_length, imsize):
+def coordinate_ims(batch_size, seq_length, imsize, device='cuda'):
     static = False
     if seq_length == 0:
         static = True
@@ -274,7 +279,7 @@ def coordinate_ims(batch_size, seq_length, imsize):
     B = batch_size
     T = seq_length
     H, W = imsize
-    ones = torch.ones([B, H, W, 1], dtype=torch.float32).cuda()
+    ones = torch.ones([B, H, W, 1], dtype=torch.float32).to(device)
     h = torch.divide(torch.arange(H).to(ones), torch.tensor(H - 1, dtype=torch.float32).to(ones))
     h = 2.0 * ((h.view(1, H, 1, 1) * ones) - 0.5)
     w = torch.divide(torch.arange(W).to(ones), torch.tensor(W - 1, dtype=torch.float32).to(ones))
@@ -542,7 +547,8 @@ def compete_agents(masks, fitnesses, alive,
     return alive
 
 
-def compute_distance_weighted_vectors(vector_map, positions, mask=None, beta=1.0, eps=1e-8):
+def compute_distance_weighted_vectors(vector_map, positions, mask=None, 
+                                      beta=1.0, eps=1e-8, device='cuda'):
     """
     compute vectors whose values are a weighted mean of vector_map, where weights are given by distance.
     """
@@ -556,7 +562,7 @@ def compute_distance_weighted_vectors(vector_map, positions, mask=None, beta=1.0
     else:
         assert list(mask.shape) == [B, H, W, 1]
 
-    hw_grid = coordinate_ims(B, 0, [H, W]).view(B, N, 2)
+    hw_grid = coordinate_ims(B, 0, [H, W], device=device).view(B, N, 2)
     delta_positions = hw_grid[:, None] - positions[:, :, None]  # [B,P,N,2]
     distances = torch.sqrt(delta_positions[..., 0] ** 2 + delta_positions[..., 1] ** 2 + eps)  # [B,P,N]
 
